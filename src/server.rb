@@ -1,16 +1,15 @@
 require 'socket'
 require_relative 'cache'
+require 'byebug'
 
 class Server
 
   def initialize(ip,port,max_size)
-  	@cache = Cache.instance
-  	@cache.setMaxSize(max_size)
-    @server = TCPServer.open( ip, port )
-    @connections = Hash.new
+  	@cache   = Cache.instance  	
+    @server  = TCPServer.open( ip, port )
     @clients = Hash.new
-    @connections[:server] = @server
-    @connections[:clients] = @clients
+    @output  = Output.instance 
+    @cache.setMaxSize(max_size)
     run
   end
 
@@ -18,13 +17,16 @@ class Server
 	loop do
 	  Thread.start(@server.accept) do |client|
 	    loop do
+	    	puts "1"
 			inMsg = client.gets
-			if inMsg.strip.include? "quit"
+			puts inMsg
+			puts "2"
+			if inMsg.strip.include? "quit" #mejorar
 				break
 			end
-			#puts inMsg
-			parseInput(client, inMsg)
-			#client.puts "Received!"
+			puts "3"
+			parse_input(client, inMsg)
+			puts "4"
 	    end
 	    client.puts "Closing memcached. Bye!"
 	    client.close
@@ -33,26 +35,30 @@ class Server
 	end
   end
 
-  def parseInput(client, strParams)
-    params   = strParams.split("\r\n")    
-    
+  def parse_input(client, strParams)
+    params   = strParams.split("\r\n")   
     commands = params[0].split
     cmdName  = commands.shift #[0]
     if cmdName.nil?
     	client.puts ""
     else
+    	puts "c"
 	    if @cache.respond_to?(cmdName)
-	      strgCommandsNames = StorageCommands.instance_methods(false)
+	    	puts "d"
+	      strgCommandsNames = ["set","add","replace","append","prepend"] 
 	      if  strgCommandsNames.to_s.include? (cmdName)    
+	      	puts "e"
 	      	client.puts "now data"
 	      	data     =  client.gets.strip
+	      	puts "f"
 	        commands.push(data)
 	      end
-	      #puts cmdName + commands.inspect
+	      puts "g"
 	      outMsg = @cache.send(cmdName, *commands )
+	      puts "h"
 	      client.puts outMsg
 	    else
-	      client.puts cmdName +" is not a known command"
+	      client.puts @output.error
 	    end
 	 end
   end
