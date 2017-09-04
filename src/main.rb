@@ -1,4 +1,6 @@
 require_relative 'server'
-port = 2626
+
+port = 6393
 max_size = 1000
-Server.new("localhost",port,max_size)
+msg_max_size = 100
+Server.new("localhost",port,max_size,msg_max_size)

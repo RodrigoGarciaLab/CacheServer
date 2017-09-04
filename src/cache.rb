@@ -1,4 +1,3 @@
-require 'byebug'
 require_relative 'dataItem'
 require_relative 'output'
 require 'singleton'
@@ -22,17 +21,11 @@ class Cache
 
   # BEGIN STORAGE COMMANDS
 
-  def set(key, *args) #flags, ttl, bytesSize, value)  
-    if args.length != 4
-      return @output.client_error
-    end
-    p getMaxSize
+  def set(key, flags, ttl, bytesSize, value) 
     @data.delete(key) 
-    @data[key]      = DataItem.new(args[0], args[2], args[3])
-    @exp_times[key] = [Time.now, args[2]]   
-    @cas_ids[key]   = @index #get
-    @index += 1
-    p "ahpora si"
+    @data[key]      = DataItem.new(flags.to_i, bytesSize.to_i, value)
+    @exp_times[key] = [Time.now.to_i, ttl.to_i]   
+    @cas_ids[key]   = getAutoIncrementId 
     if @data.length > @max_size
       toDeletekey = @data.first[0]
       @data.delete(toDeletekey) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
@@ -131,11 +124,11 @@ class Cache
   end
 
   def generateOutput(key)
-    @output.value << " " << key << " " << @data[key].flags.to_s << " " << @data[key].size.to_s <<  @output.eol << @data[key].value.join(",") << @output.eol
+    out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
   end
 
   def generateOutputCAS(key)
-    @output.value << " " << key << " " << @data[key].flags.to_s << " " << @data[key].size.to_s << " " << @cas_ids[key].to_s <<  @output.eol << @data[key].value.join(",") << @output.eol
+    out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@cas_ids[key].to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
   end
 
   def lruReOrder(key) # deletes and adds the accessed key to keep the Hash ordered according to LRU algorithm
@@ -154,17 +147,17 @@ class Cache
         @exp_times.delete(key)
         @cas_ids.delete(key)
       end
-    end
+    end    
     self
   end
 
   def expired?(key)
     return true unless @exp_times.has_key?(key)
-    time, ttl = @exp_times[key]
+    time_then, ttl = @exp_times[key]
     if ttl > 60*60*24*30 # if it`s more than 30 days, it`s unix time
       return Time.now.to_i > ttl
     else
-      Time.now - time > ttl
+      Time.now.to_i > time_then + ttl
     end
   end
 

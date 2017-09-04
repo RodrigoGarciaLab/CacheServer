@@ -1,66 +1,83 @@
 require 'socket'
 require_relative 'cache'
+require_relative 'methodParameters'
 require 'byebug'
 
 class Server
 
-  def initialize(ip,port,max_size)
-  	@cache   = Cache.instance  	
-    @server  = TCPServer.open( ip, port )
-    @clients = Hash.new
-    @output  = Output.instance 
-    @cache.setMaxSize(max_size)
-    run
-  end
+	def initialize(ip,port,cache_max_size,msg_max_size)
+		@cache   = Cache.instance  	
+		@server  = TCPServer.open(ip, port)
+		@clients = Hash.new
+		@output  = Output.instance 
+		@msg_max_size = msg_max_size
+		@cache.setMaxSize(cache_max_size)
 
-  def run
-	loop do
-	  Thread.start(@server.accept) do |client|
-	    loop do
-	    	puts "1"
-			inMsg = client.gets
-			puts inMsg
-			puts "2"
-			if inMsg.strip.include? "quit" #mejorar
-				break
-			end
-			puts "3"
-			parse_input(client, inMsg)
-			puts "4"
-	    end
-	    client.puts "Closing memcached. Bye!"
-	    client.close
-	    Thread.kill
-	 end
+		@params  = MethodsParameters.instance
+		@params_amounts =  @params.getParametersAmounts		
+		@public_commands = @params_amounts.keys	
+		@strgCommandsNames = @params.getStorageCommands	
+		run
 	end
-  end
 
-  def parse_input(client, strParams)
-    params   = strParams.split("\r\n")   
-    commands = params[0].split
-    cmdName  = commands.shift #[0]
-    if cmdName.nil?
-    	client.puts ""
-    else
-    	puts "c"
-	    if @cache.respond_to?(cmdName)
-	    	puts "d"
-	      strgCommandsNames = ["set","add","replace","append","prepend"] 
-	      if  strgCommandsNames.to_s.include? (cmdName)    
-	      	puts "e"
-	      	client.puts "now data"
-	      	data     =  client.gets.strip
-	      	puts "f"
-	        commands.push(data)
-	      end
-	      puts "g"
-	      outMsg = @cache.send(cmdName, *commands )
-	      puts "h"
-	      client.puts outMsg
+	def run
+		loop do
+			Thread.start(@server.accept) do |client|
+				loop do
+					inMsg = client.recv(@msg_max_size).chomp					
+					if inMsg.strip. == "quit" #mejorar
+						break
+					end
+					parse_input(client, inMsg)
+				end
+				client.puts "Closing memcached. Bye!"
+				client.close
+				Thread.kill
+			end
+		end
+	end
+
+	def is_number? string
+	  true if Integer(string) rescue false
+	end
+
+	def numericArgs(args)
+		args.all? {|arg| is_number? arg} 
+	end
+
+	def parse_input(client, str_params)
+	    commands = str_params.split
+	    cmd_name  = commands.shift #[0]
+	    if cmd_name.nil?
+	    	client.write @output.error
 	    else
-	      client.puts @output.error
-	    end
-	 end
-  end
-end
+		    if !@public_commands.include? cmd_name #if is not a valid command return error
+		    	client.write @output.error
+		    else	
+	      		if @strgCommandsNames.include? cmd_name  
+	      			required_amount = @params_amounts[cmd_name].first
+			      	if commands.length != required_amount # check if the amount of parameters is the same as expected.
+			      		outMsg = "#{@output.client_error} : #{cmd_name} should have exactly #{required_amount.to_s} parameters."
+			      	else
+			      		key , *numeric_args = commands   # check if parameters after key are integers.			      		
+			      		if !numericArgs(numeric_args)
+			      			outMsg = "#{@output.client_error} : #{cmd_name} parameters must be integers."
+			      			client.write outMsg
+			      			return
+			      		end
+				      	client.write "Send Data" # then request data block
+				      	byte_size = numeric_args[1]
+				      	data =  client.recv(100)
+				      	commands.push(data)
+				      	#p commands
+				    end
+				end
+				# p commands
+				# p cmd_name
+				outMsg = @cache.send(cmd_name, *commands)				
+			end   
+			client.write outMsg			
+		end	    
+	end
 
+end
