@@ -23,8 +23,8 @@ class Cache
 
   def set(key, flags, ttl, bytesSize, value) 
     @data.delete(key) 
-    @data[key]      = DataItem.new(flags.to_i, bytesSize.to_i, value)
-    @exp_times[key] = [Time.now.to_i, ttl.to_i]   
+    @data[key]      = DataItem.new(flags, bytesSize, value)
+    @exp_times[key] = [Time.now.to_i, ttl]   
     @cas_ids[key]   = getAutoIncrementId 
     if @data.length > @max_size
       toDeletekey = @data.first[0]
@@ -57,7 +57,7 @@ class Cache
     if @data.key? key
       modifyCAS(key)
       lruReOrder(key)
-      @data[key].append(bytesSize,value) 
+      @data[key].append(bytesSize,value)       
       return @output.stored
     else
       return @output.notStored
@@ -119,6 +119,18 @@ class Cache
   end
 
   # BEGIN AUX FUNCTIONS
+  def hasKey? key
+    @data.key? key
+  end
+
+  def wipeOut # not 
+    @data.each do |key|
+      @data.delete(key)
+      @exp_times.delete(key)
+      @cas_ids.delete(key)      
+    end  
+  end 
+
   def getAutoIncrementId  
     @index += 1
   end
@@ -154,6 +166,9 @@ class Cache
   def expired?(key)
     return true unless @exp_times.has_key?(key)
     time_then, ttl = @exp_times[key]
+    if ttl == 0 #if ttl is zero it never expires
+      return false
+    end
     if ttl > 60*60*24*30 # if it`s more than 30 days, it`s unix time
       return Time.now.to_i > ttl
     else
@@ -176,20 +191,23 @@ class Cache
     @max_size
   end
 
+  def printData
+    p @data 
+  end
+
   def printKeys
     p @data.keys 
   end
 
   def printCas
     p @cas_ids
-  end
-
-  def first
-    p @data.first
-  end
-
-  def print
-    puts @exp_times
   end  
+
+  def printTimes
+    p @exp_times
+  end  
+
+  private :expire!, :expired?, :modifyCAS, :getAutoIncrementId
+  private :generateOutput, :generateOutputCAS, :lruReOrder
 
 end
