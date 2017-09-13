@@ -1,6 +1,6 @@
 # RGCacheServer
 
-  Introduction
+  #Introduction
       RGCacheServer is a ruby server based on the especifications of Memcached (http://memcached.org/).
 
   How it works
