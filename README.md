@@ -19,7 +19,7 @@ RGCacheServer is a ruby cache server based on the especifications of Memcached (
         cas: stores the data but only if no one else has updated since the user last fetched it
 - the expected format is the following:<br>
 \<command name\> \<key\> \<flags\> \<exptime\> \<bytes\> [noreply]\r\n
-- After this line, the client sends the data block:
+- After this line, the client sends the data block:<br>
 \<data block\>\r\n
         
 ##### Retrieval commands
@@ -28,10 +28,5 @@ RGCacheServer is a ruby cache server based on the especifications of Memcached (
         get: retrieves the key, flags, size and data for every sent key
         gets: retrieves the key, flags, size, cas unique id and data for every sent key
         
-- the expected format is the following:
+- the expected format is the following:<br>
 \<command name\> \<key\>*\r\n
-
-
-
-
-
