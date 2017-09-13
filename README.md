@@ -18,7 +18,7 @@ RGCacheServer is a ruby cache server based on the especifications of Memcached (
         prepend: add the data to an existing key before existing data
         cas: stores the data but only if no one else has updated since the user last fetched it
 - the expected format is the following:
-"<command name> <key> <flags> <exptime> <bytes> [noreply]\r\n"
+"\<command name\> \<key\> <flags> <exptime> <bytes> [noreply]\r\n"
 - After this line, the client sends the data block:
 <data block>\r\n
         
