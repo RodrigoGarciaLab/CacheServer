@@ -31,15 +31,15 @@ class MethodsParameters
     @byte_size_pos["cas"]     = 3
   end
 
-  def getParametersAmounts
+  def get_parameters_amounts
     @parameters_amounts
   end
 
-  def getByteSizePos
+  def get_bytesize_pos
     @byte_size_pos
   end
 
-  def getStorageCommands
+  def get_storage_commands
     stg_commands = Array.new
     @parameters_amounts.each do | key, info |      
       if info[1] == @cmd_type.storage

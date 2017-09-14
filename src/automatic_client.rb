@@ -1,5 +1,5 @@
 require "socket"
-require_relative 'dataItem'
+require_relative 'data_item'
 
 class AutomaticClient
 	def initialize(host,port,nro)		
@@ -15,10 +15,10 @@ class AutomaticClient
 		input_msg = "init"
 		while input_msg != "quit"
 			if require_data
-				input_msg = randomData
+				input_msg = random_data
 				require_data = false
 			else
-				input_msg, require_data = randomCommands
+				input_msg, require_data = random_commands
 			end 		
 			@file.puts("Client: #{input_msg} \n")
 			@server.write input_msg
@@ -28,7 +28,7 @@ class AutomaticClient
 		server.close
 	end
 
-	def randomData
+	def random_data
 		random_index = rand(0..length)
 		case random_index
 			when 0	
@@ -49,7 +49,7 @@ class AutomaticClient
 				"it shouldn`t be anything else"
 		end
 	end
-	def randomCommands
+	def random_commands
 		length = 2
 		if @saved_keys.length > 0
 			saved_key = @saved_keys.sample

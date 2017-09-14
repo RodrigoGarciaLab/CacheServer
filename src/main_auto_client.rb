@@ -1,4 +1,4 @@
-require_relative 'automaticClient'
+require_relative 'automatic_client'
 
 port = 6393
 host = "localhost"

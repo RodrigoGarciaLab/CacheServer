@@ -7,14 +7,14 @@ class DataItem
       @value = [value]         
    end
 
-   def append(newSize, newValue)
-      @value.push(newValue)
-      @size += newSize
+   def append(new_size, new_value)
+      @value.push(new_value)
+      @size += new_size
    end
 
-   def prepend(newSize, newValue)
-      @value.unshift(newValue)
-      @size += newSize
+   def prepend(new_size, new_value)
+      @value.unshift(new_value)
+      @size += new_size
    end
 
    def to_s

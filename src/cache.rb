@@ -25,7 +25,7 @@ class Cache
     @data.delete(key) 
     @data[key]      = DataItem.new(flags, bytes_size, value)
     @exp_times[key] = [Time.now.to_i, ttl]   
-    @cas_ids[key]   = getAutoIncrementId 
+    @cas_ids[key]   = get_autoincrement_id 
     if @data.length > @max_size
       to_delete_key = @data.first[0]
       @data.delete(to_delete_key) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
@@ -40,7 +40,7 @@ class Cache
       set(key, flags, ttl, bytes_size, value)
       return @output.stored
     else
-      return @output.notStored
+      return @output.not_stored
     end
   end
 
@@ -49,29 +49,29 @@ class Cache
       set(key, flags, ttl, bytes_size, value)
       return @output.stored
     else
-      return @output.notStored
+      return @output.not_stored
     end
   end
 
   def append(key,bytes_size,value)
     if @data.key? key
-      modifyCAS(key)
-      lruReOrder(key)
+      modify_CAS(key)
+      lru_reorder(key)
       @data[key].append(bytes_size,value)       
       return @output.stored
     else
-      return @output.notStored
+      return @output.not_stored
     end
   end   
 
   def prepend(key,bytes_size,value)
     if @data.key? key
-      modifyCAS(key)
-      lruReOrder(key)
+      modify_CAS(key)
+      lru_reorder(key)
       @data[key].prepend(bytes_size,value)       
       return @output.stored
     else
-      return @output.notStored
+      return @output.not_stored
     end
   end 
 
@@ -83,7 +83,7 @@ class Cache
         return @output.exists
       end
     else
-      return @output.notFound
+      return @output.not_found
     end
   end 
 
@@ -93,8 +93,8 @@ class Cache
     output = ""
     keys.each do |key|
       next if !@data.key? key
-      lruReOrder(key)  
-      output << generateOutput(key) 
+      lru_reorder(key)  
+      output << generate_output(key) 
     end
     output << @output.end
     return output
@@ -105,7 +105,7 @@ class Cache
     keys.each do |key|
       next if !@data.key? key
       lruReOrder(key)  
-      output << generateOutputCAS(key)
+      output << generate_output_CAS(key)
     end
     output << @output.end
   end
@@ -123,7 +123,7 @@ class Cache
     @data.key? key
   end
 
-  def wipeOut # not 
+  def wipe_out # not 
     @data.each do |key|
       @data.delete(key)
       @exp_times.delete(key)
@@ -131,25 +131,25 @@ class Cache
     end  
   end 
 
-  def getAutoIncrementId  
+  def get_autoincrement_id  
     @index += 1
   end
 
-  def generateOutput(key)
+  def generate_output(key)
     out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
   end
 
-  def generateOutputCAS(key)
+  def generate_output_CAS(key)
     out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@cas_ids[key].to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
   end
 
-  def lruReOrder(key) # deletes and adds the accessed key to keep the Hash ordered according to LRU algorithm
+  def lru_reorder(key) # deletes and adds the accessed key to keep the Hash ordered according to LRU algorithm
     value = @data.delete(key)
     @data[key] = value
   end
 
-  def modifyCAS(key)
-    @cas_ids[key] = getAutoIncrementId
+  def modify_CAS(key)
+    @cas_ids[key] = get_autoincrement_id
   end
 
   def expire!
@@ -187,27 +187,27 @@ class Cache
     end
   end
 
-  def getMaxSize
+  def get_max_size
     @max_size
   end
 
-  def printData
+  def print_data
     p @data 
   end
 
-  def printKeys
+  def print_keys
     p @data.keys 
   end
 
-  def printCas
+  def print_CAS
     p @cas_ids
   end  
 
-  def printTimes
+  def print_times
     p @exp_times
   end  
 
-  private :expire!, :expired?, :modifyCAS, :getAutoIncrementId
-  private :generateOutput, :generateOutputCAS, :lruReOrder
+  private :expire!, :expired?, :modify_CAS, :get_autoincrement_id
+  private :generate_output, :generate_output_CAS, :lru_reorder
 
 end

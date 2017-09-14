@@ -6,8 +6,8 @@ describe Cache do
 
       before(:all) do 
          @cache = Cache.instance 
-         @cache.setMaxSize(3)
-         @cache.wipeOut
+         @cache.set_max_size(3)
+         @cache.wipe_out
       end 
 
       it "should expire items after their TTL" do        
