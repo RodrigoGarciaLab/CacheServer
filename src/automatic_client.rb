@@ -12,18 +12,18 @@ class AutomaticClient
 	def run	
 		@saved_keys = []		
 		require_data = false
-		inputMsg = "init"
-		while inputMsg != "quit"
+		input_msg = "init"
+		while input_msg != "quit"
 			if require_data
-				inputMsg = randomData
+				input_msg = randomData
 				require_data = false
 			else
-				inputMsg, require_data = randomCommands
+				input_msg, require_data = randomCommands
 			end 		
-			@file.puts("Client: #{inputMsg} \n")
-			@server.write inputMsg
-			inMsg = @server.recv(100)
-			@file.puts("Server: #{inMsg} \n") }
+			@file.puts("Client: #{input_msg} \n")
+			@server.write input_msg
+			in_msg = @server.recv(100)
+			@file.puts("Server: #{in_msg} \n") }
 		end
 		server.close
 	end
@@ -38,13 +38,13 @@ class AutomaticClient
 			when 2
 				dataItem				
 			when 3		
-				inputMsg ="append #{random_key} 5"
+				input_msg ="append #{random_key} 5"
 			when 4	
-				inputMsg = "set #{random_key} should fail 15"				
+				input_msg = "set #{random_key} should fail 15"				
 			when 5
-				inputMsg ="get #{saved_key}"
+				input_msg ="get #{saved_key}"
 			when 6
-				inputMsg ="get #{saved_key} #{other_saved_key} "			
+				input_msg ="get #{saved_key} #{other_saved_key} "			
 			else
 				"it shouldn`t be anything else"
 		end
@@ -62,23 +62,23 @@ class AutomaticClient
 		case random_index
 			when 0			
 				@saved_keys.push(random_key)
-				inputMsg = "set #{random_key} 0 0 15" 
+				input_msg = "set #{random_key} 0 0 15" 
 			when 1
 				@saved_keys.push(random_key)
-				inputMsg ="set #{random_key} 0 10 12"
+				input_msg ="set #{random_key} 0 10 12"
 			when 2
-				inputMsg ="prepend #{random_key} 4"				
+				input_msg ="prepend #{random_key} 4"				
 			when 3		
-				inputMsg ="append #{random_key} 5"
+				input_msg ="append #{random_key} 5"
 			when 4	
-				inputMsg = "set #{random_key} should fail 15"				
+				input_msg = "set #{random_key} should fail 15"				
 			when 5
-				inputMsg ="get #{saved_key}"
+				input_msg ="get #{saved_key}"
 			when 6
-				inputMsg ="get #{saved_key} #{other_saved_key} "			
+				input_msg ="get #{saved_key} #{other_saved_key} "			
 			else
 				"it shouldn`t be anything else"
 		end
-		return inputMsg, require_data
+		return input_msg, require_data
 	end
 end

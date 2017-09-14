@@ -1,4 +1,4 @@
-require_relative 'client'
+require_relative 'src/client'
 
 port = 6393
 host = "localhost"

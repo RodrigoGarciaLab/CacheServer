@@ -23,11 +23,11 @@ class MethodsParameters
     @parameters_amounts["printData"]    = [2,@cmd_type.deletion]
 
     @byte_size_pos = Hash.new
-    @byte_size_pos["set"]     = 2
-    @byte_size_pos["add"]     = 2
-    @byte_size_pos["replace"] = 2
-    @byte_size_pos["append"]  = 0
-    @byte_size_pos["prepend"] = 0
+    @byte_size_pos["set"]     = 3
+    @byte_size_pos["add"]     = 3
+    @byte_size_pos["replace"] = 3
+    @byte_size_pos["append"]  = 1
+    @byte_size_pos["prepend"] = 1
     @byte_size_pos["cas"]     = 3
   end
 

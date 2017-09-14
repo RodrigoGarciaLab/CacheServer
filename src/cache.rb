@@ -1,4 +1,4 @@
-require_relative 'dataItem'
+require_relative 'data_item'
 require_relative 'output'
 require 'singleton'
 
@@ -21,64 +21,64 @@ class Cache
 
   # BEGIN STORAGE COMMANDS
 
-  def set(key, flags, ttl, bytesSize, value) 
+  def set(key, flags, ttl, bytes_size, value) 
     @data.delete(key) 
-    @data[key]      = DataItem.new(flags, bytesSize, value)
+    @data[key]      = DataItem.new(flags, bytes_size, value)
     @exp_times[key] = [Time.now.to_i, ttl]   
     @cas_ids[key]   = getAutoIncrementId 
     if @data.length > @max_size
-      toDeletekey = @data.first[0]
-      @data.delete(toDeletekey) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
-      @exp_times.delete(toDeletekey)
-      @cas_ids.delete(toDeletekey)
+      to_delete_key = @data.first[0]
+      @data.delete(to_delete_key) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
+      @exp_times.delete(to_delete_key)
+      @cas_ids.delete(to_delete_key)
     end    
     return @output.stored
   end  
 
-  def add(key, flags, ttl, bytesSize, value)
+  def add(key, flags, ttl, bytes_size, value)
     if !@data.key? key
-      set(key, flags, ttl, bytesSize, value)
+      set(key, flags, ttl, bytes_size, value)
       return @output.stored
     else
       return @output.notStored
     end
   end
 
-  def replace(key, flags, ttl, bytesSize, value)
+  def replace(key, flags, ttl, bytes_size, value)
     if @data.key? key
-      set(key, flags, ttl, bytesSize, value)
+      set(key, flags, ttl, bytes_size, value)
       return @output.stored
     else
       return @output.notStored
     end
   end
 
-  def append(key,bytesSize,value)
+  def append(key,bytes_size,value)
     if @data.key? key
       modifyCAS(key)
       lruReOrder(key)
-      @data[key].append(bytesSize,value)       
+      @data[key].append(bytes_size,value)       
       return @output.stored
     else
       return @output.notStored
     end
   end   
 
-  def prepend(key,bytesSize,value)
+  def prepend(key,bytes_size,value)
     if @data.key? key
       modifyCAS(key)
       lruReOrder(key)
-      @data[key].prepend(bytesSize,value)       
+      @data[key].prepend(bytes_size,value)       
       return @output.stored
     else
       return @output.notStored
     end
   end 
 
-  def cas(key, flags, ttl, bytesSize, unique_cas_token, value)
+  def cas(key, flags, ttl, bytes_size, unique_cas_token, value)
     if @cas_ids.key? key
       if @cas_ids[key] == unique_cas_token
-        set(key, flags, ttl, bytesSize, value)
+        set(key, flags, ttl, bytes_size, value)
       else
         return @output.exists
       end

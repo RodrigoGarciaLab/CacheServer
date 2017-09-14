@@ -1,5 +1,5 @@
 require "socket"
-require_relative 'dataItem'
+require_relative 'data_item'
 
 class Client
 	def initialize(host,port)		
@@ -8,20 +8,19 @@ class Client
 		run
 	end
 
-	def run
-		p "running"
-		inputMsg = "init"
-		while @inputMsg != "quit"
-			inputMsg = gets.chomp 
-			if inputMsg.include? "data"				
-				inputMsg = [DataItem.new(1,2,3)]
-				mymsg = "dale\n".unpack("C*")
-				p mymsg
-				inputMsg = mymsg
+	def run		
+		input_msg = "init"
+		while @input_msg != "quit"
+			input_msg = gets.chomp 
+			if input_msg.include? "data"				
+				input_msg = [DataItem.new(1,2,3)]
+				my_msg = "dale\n".unpack("C*")
+				p my_msg
+				input_msg = my_msg
 			end
-			@server.write inputMsg
-			inMsg = @server.recv(100)
-			p inMsg
+			@server.write input_msg
+			in_msg = @server.recv(100)
+			p in_msg
 		end
 		server.close	
 	end

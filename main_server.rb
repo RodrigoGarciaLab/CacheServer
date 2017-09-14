@@ -1,4 +1,4 @@
-require_relative 'server'
+require_relative 'src/server'
 
 port = 6393
 max_size = 1000
