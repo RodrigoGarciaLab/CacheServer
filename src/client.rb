@@ -4,7 +4,7 @@ require_relative 'data_item'
 class Client
 	def initialize(host,port)		
 		@server = TCPSocket.open(host, port)
-		puts "You are now connected to memcached."		
+		puts @server.recv(100)		
 		run
 	end
 

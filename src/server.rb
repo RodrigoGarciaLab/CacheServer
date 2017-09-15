@@ -26,8 +26,10 @@ class Server
 		loop do
 			Thread.start(@server.accept) do |client|
 				
+        @clients[client]  = get_client_id
         @thread_variables = Thread.current              
-
+        puts "Client##{@clients[client]} is now connected"
+        client.write greeting_msg(@clients[client])
 				loop do					  
           # variables accessible only from inside the thread
           @thread_variables[:out_msg]  = "" 
@@ -49,6 +51,10 @@ class Server
 		end
 	end
 
+  def greeting_msg(id)
+    "Greetings Client##{id}, you are now connected to RG-CacheServer"
+  end
+  
   def get_client_id
     @client_id += 1
   end
