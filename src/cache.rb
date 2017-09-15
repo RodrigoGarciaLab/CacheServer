@@ -1,5 +1,5 @@
 require_relative 'data_item'
-require_relative 'output'
+require_relative 'constants'
 require 'singleton'
 
 class Cache
@@ -12,10 +12,10 @@ class Cache
     @cas_ids   = Hash.new  # stores unique Ids
     @index     = 0 
     @max_size  = 0
-    @output    = Output.instance 
+    
   end    
 
-  def setMaxSize(max_size)
+  def set_max_size(max_size)
     @max_size = max_size
   end     
 
@@ -26,52 +26,51 @@ class Cache
     @data[key]      = DataItem.new(flags, bytes_size, value)
     @exp_times[key] = [Time.now.to_i, ttl]   
     @cas_ids[key]   = get_autoincrement_id 
+
     if @data.length > @max_size
       to_delete_key = @data.first[0]
       @data.delete(to_delete_key) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
       @exp_times.delete(to_delete_key)
       @cas_ids.delete(to_delete_key)
     end    
-    return @output.stored
+    return Constants::STORED
   end  
 
   def add(key, flags, ttl, bytes_size, value)
     if !@data.key? key
-      set(key, flags, ttl, bytes_size, value)
-      return @output.stored
+      set(key, flags, ttl, bytes_size, value)      
     else
-      return @output.not_stored
+      return Constants::NOT_STORED
     end
   end
 
   def replace(key, flags, ttl, bytes_size, value)
     if @data.key? key
       set(key, flags, ttl, bytes_size, value)
-      return @output.stored
     else
-      return @output.not_stored
+      return Constants::NOT_STORED
     end
   end
 
-  def append(key,bytes_size,value)
+  def append(key, bytes_size, value)
     if @data.key? key
       modify_CAS(key)
       lru_reorder(key)
-      @data[key].append(bytes_size,value)       
-      return @output.stored
+      @data[key].append(bytes_size, value)       
+      return Constants::STORED
     else
-      return @output.not_stored
+      return Constants::NOT_STORED
     end
   end   
 
-  def prepend(key,bytes_size,value)
+  def prepend(key, bytes_size, value)
     if @data.key? key
       modify_CAS(key)
       lru_reorder(key)
-      @data[key].prepend(bytes_size,value)       
-      return @output.stored
+      @data[key].prepend(bytes_size, value)       
+      return Constants::STORED
     else
-      return @output.not_stored
+      return Constants::NOT_STORED
     end
   end 
 
@@ -80,40 +79,35 @@ class Cache
       if @cas_ids[key] == unique_cas_token
         set(key, flags, ttl, bytes_size, value)
       else
-        return @output.exists
+        return Constants::EXISTS
       end
     else
-      return @output.not_found
+      return Constants::NOT_FOUND
     end
   end 
 
   # BEGIN RETRIEVAL COMMANDS
-
-  def get(*keys)
-    output = ""
+  def getters(keys)
+    output = String.new
     keys.each do |key|
       next if !@data.key? key
       lru_reorder(key)  
-      output << generate_output(key) 
+      output << yield(key)
     end
-    output << @output.end
-    return output
+    output << Constants::END_STRING
   end
 
-  def gets(*keys)   
-    output = ""
-    keys.each do |key|
-      next if !@data.key? key
-      lruReOrder(key)  
-      output << generate_output_CAS(key)
-    end
-    output << @output.end
+  def get(*keys)
+    getters(keys){|key| generate_output(key)}
+  end
+
+  def gets(*keys)
+    getters(keys){|key| generate_output_CAS(key)}    
   end
 
   # DELETE COMMAND
-
   def delete(key)
-    @data.delete(key) # From Ruby 1.9 Hash is ordered so the first element is the oldest one
+    @data.delete(key)
     @exp_times.delete(key)
     @cas_ids.delete(key)
   end
@@ -136,11 +130,11 @@ class Cache
   end
 
   def generate_output(key)
-    out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
+    out = "#{Constants::VALUE} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s}#{Constants::EOL}#{@data[key].value.join(",")}#{Constants::EOL}"
   end
 
   def generate_output_CAS(key)
-    out = "#{@output.value} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@cas_ids[key].to_s} #{@output.eol} #{@data[key].value.join(",")} #{@output.eol}"
+    out = "#{Constants::VALUE} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@cas_ids[key].to_s}#{Constants::EOL}#{@data[key].value.join(",")}#{Constants::EOL}"
   end
 
   def lru_reorder(key) # deletes and adds the accessed key to keep the Hash ordered according to LRU algorithm

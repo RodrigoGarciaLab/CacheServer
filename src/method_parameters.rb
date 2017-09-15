@@ -1,48 +1,36 @@
-require 'singleton'
 require 'ostruct'
 
-class MethodsParameters
-  include Singleton 
+module MethodsParameters
 
-  def initialize()
-    @cmd_type = OpenStruct.new
-    @cmd_type.storage   = "storage"
-    @cmd_type.retrieval = "retrieval"
-    @cmd_type.deletion  = "deletion"
+  CMD_TYPE = OpenStruct.new
+  CMD_TYPE.storage   = "storage"
+  CMD_TYPE.retrieval = "retrieval"
+  CMD_TYPE.deletion  = "deletion"
 
-    @parameters_amounts = Hash.new
-    @parameters_amounts["set"]     = [4,@cmd_type.storage]
-    @parameters_amounts["add"]     = [4,@cmd_type.storage]
-    @parameters_amounts["replace"] = [4,@cmd_type.storage]
-    @parameters_amounts["append"]  = [2,@cmd_type.storage]
-    @parameters_amounts["prepend"] = [2,@cmd_type.storage]
-    @parameters_amounts["cas"]     = [5,@cmd_type.storage]
-    @parameters_amounts["delete"]  = [1,@cmd_type.deletion]
-    @parameters_amounts["get"]     = [2,@cmd_type.retrieval]
-    @parameters_amounts["gets"]    = [2,@cmd_type.retrieval]
-    @parameters_amounts["printData"]    = [2,@cmd_type.deletion]
+  PARAMETERS_AMOUNTS = Hash.new
+  PARAMETERS_AMOUNTS["set"]     = [4, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["add"]     = [4, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["replace"] = [4, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["append"]  = [2, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["prepend"] = [2, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["cas"]     = [5, CMD_TYPE.storage]
+  PARAMETERS_AMOUNTS["delete"]  = [1, CMD_TYPE.deletion]
+  PARAMETERS_AMOUNTS["get"]     = [2, CMD_TYPE.retrieval]
+  PARAMETERS_AMOUNTS["gets"]    = [2, CMD_TYPE.retrieval]
+  PARAMETERS_AMOUNTS["printData"] = [2, CMD_TYPE.deletion] # just for test matters
 
-    @byte_size_pos = Hash.new
-    @byte_size_pos["set"]     = 3
-    @byte_size_pos["add"]     = 3
-    @byte_size_pos["replace"] = 3
-    @byte_size_pos["append"]  = 1
-    @byte_size_pos["prepend"] = 1
-    @byte_size_pos["cas"]     = 3
-  end
-
-  def get_parameters_amounts
-    @parameters_amounts
-  end
-
-  def get_bytesize_pos
-    @byte_size_pos
-  end
-
-  def get_storage_commands
+  BYTE_SIZE_POS = Hash.new
+  BYTE_SIZE_POS["set"]     = 3
+  BYTE_SIZE_POS["add"]     = 3
+  BYTE_SIZE_POS["replace"] = 3
+  BYTE_SIZE_POS["append"]  = 1
+  BYTE_SIZE_POS["prepend"] = 1
+  BYTE_SIZE_POS["cas"]     = 3
+  
+  def MethodsParameters.get_storage_commands
     stg_commands = Array.new
-    @parameters_amounts.each do | key, info |      
-      if info[1] == @cmd_type.storage
+    PARAMETERS_AMOUNTS.each do | key, info |      
+      if info[1] == CMD_TYPE.storage
         stg_commands.push(key)
       end
     end

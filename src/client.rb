@@ -8,10 +8,12 @@ class Client
 		run
 	end
 
-	def run		
-		input_msg = "init"
-		while @input_msg != "quit"
+	def run				
+		loop do
 			input_msg = gets.chomp 
+			if input_msg == "quit"
+				break
+			end
 			if input_msg.include? "data"				
 				input_msg = [DataItem.new(1,2,3)]
 				my_msg = "dale\n".unpack("C*")
@@ -22,6 +24,6 @@ class Client
 			in_msg = @server.recv(100)
 			p in_msg
 		end
-		server.close	
+		@server.close	
 	end
 end

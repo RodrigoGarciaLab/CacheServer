@@ -1,6 +1,5 @@
 require_relative '../src/cache'
 
-
 describe Cache do 
    context "With valid input" do 
 

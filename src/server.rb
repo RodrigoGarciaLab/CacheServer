@@ -1,24 +1,23 @@
-require 'socket'
 require_relative 'cache'
 require_relative 'method_parameters'
+require_relative 'constants'
+require 'socket'
 require 'json'
 
 class Server
 
-	def initialize(ip,port,cache_max_size,msg_max_size)
+	def initialize(ip, port, cache_max_size, msg_max_size)
 		@cache   	  = Cache.instance  	
 		@server  	  = TCPServer.open(ip, port)
 		@clients 	  = Hash.new
-		@output 	  = Output.instance 
+		
 		@msg_max_size = msg_max_size
 		@cache.set_max_size(cache_max_size)
-
-
-		@params  		   = MethodsParameters.instance
-		@params_amounts    = @params.get_parameters_amounts	 #att accessor	
-		@public_commands   = @params_amounts.keys	
-		@strg_commands_names = @params.get_storage_commands	
-		@byte_size_pos     = @params.get_bytesize_pos
+		
+		@params_amounts      = MethodsParameters::PARAMETERS_AMOUNTS	
+		@public_commands     = MethodsParameters::PARAMETERS_AMOUNTS.keys	
+		@strg_commands_names = MethodsParameters.get_storage_commands	
+		@byte_size_pos       = MethodsParameters::BYTE_SIZE_POS
 		run
 	end
 
@@ -26,19 +25,21 @@ class Server
 		loop do
 			Thread.start(@server.accept) do |client|
 				
-        thread_variables = Thread.current              
+        @thread_variables = Thread.current              
 
 				loop do					  
           # variables accessible only from inside the thread
-          thread_variables[:out_msg]  = "" 
-          thread_variables[:no_reply] = false  
-          thread_variables[:storage]  = false  
-          thread_variables[:parameters]  = Array.new
+          @thread_variables[:out_msg]  = "" 
+          @thread_variables[:no_reply] = false  
+          @thread_variables[:is_storage]  = false  
+          @thread_variables[:parameters]  = Array.new
 
 					in_msg = client.recv(@msg_max_size).chomp					
 					if in_msg.strip. == "quit" #mejorar
 						break
-					end					
+					end			
+          "antes parse"
+          p in_msg		
 					parse_input(client, in_msg)
 				end
 				client.puts "Closing memcached. Bye!"
@@ -56,19 +57,19 @@ class Server
 		args.all? {|arg| is_number? arg} 
 	end
 
-	def request_data(client,cmd_name)
+	def request_data(client, cmd_name)
 		client.write "Now send the data you want to store" # then request data block 
 		
-		byte_size   = thread_variables[:parameters][@byte_size_pos[cmd_name]]	
-  	#string_data = getData(client,@msg_max_size) # 
-  	data = get_data(client,byte_size) #-> DUDA CONCEPTUAL
+		byte_size   = @thread_variables[:parameters][@byte_size_pos[cmd_name]]	
+  	#string_data = getData(client, @msg_max_size) # 
+  	data = get_data(client, byte_size) #-> DUDA CONCEPTUAL
   	# data 		= JSON.parse(string_data)	
   	# data 		= data[0..byte_size-1]	
-  	thread_variables[:parameters].push(data)	
+  	@thread_variables[:parameters].push(data)	
   end
 
 	def get_data(client, byte_size)
-		peek =  client.recv(@msg_max_size,Socket::MSG_PEEK) 
+		peek = client.recv(@msg_max_size, Socket::MSG_PEEK) 
   	data = client.recv(byte_size)	
   	
   	if peek.bytesize > byte_size # clean buffer
@@ -90,7 +91,7 @@ class Server
 
 	def valid_key?(key)		
 		special = "?<>',?[]}{=-)(*&^%$#`~{}"
-		regex = /[#{special.gsub(/./){|char| "\\#{char}"}}]/
+		regex   = /[#{special.gsub(/./){|char| "\\#{char}"}}]/
 		!(key =~ regex) && key.length <= 250
 	end
 
@@ -98,18 +99,19 @@ class Server
 		!cmd_name.nil? && (@public_commands.include? cmd_name)
 	end
 
-  def correct_length?(cmd_name,parameters)
+  def correct_length?(cmd_name, parameters)
     required_amount = @params_amounts[cmd_name].first
+
     if parameters.length == required_amount # check if the amount of parameters is the same as expected and if it includes noreply.      		
       correct = true
-      thread_variables[:no_reply] = false      		
+      @thread_variables[:no_reply] = false      		
     else
       if (parameters.length == required_amount + 1) and (parameters[parameters.length-1] == "noreply")
         correct = true
-        thread_variables[:no_reply] = true
+        @thread_variables[:no_reply] = true
       else      			
         correct = false
-        thread_variables[:no_reply] = false
+        @thread_variables[:no_reply] = false
       end
     end
     return correct
@@ -117,40 +119,46 @@ class Server
 
   def correct_type?(key, string_args)    	
   	correct = false    	
+
   	if !valid_key? key	
-			thread_variables[:out_msg] = "#{@output.client_error} : #{key} is not a valid key."
+			@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{key} is not a valid key."
 		else	  				      		
   		if !args_numeric?(string_args) 			      			
-  			thread_variables[:out_msg] = "#{@output.client_error} : #{cmd_name} parameters must be integers (except key)."	      				      			
+  			@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{cmd_name} parameters must be integers (except key)."	      				      			
   		else	      			   		
     		numeric_args = string_args.map(&:to_i) # now i know parameters are integers, i convert them
-    		thread_variables[:parameters] 	 = key , *numeric_args
+    		@thread_variables[:parameters] 	 = key, *numeric_args
     		correct      = true
     	end
     end
     return correct
 	end
 
-	def correct_parameters?(cmd_name,parameters)		
-		correct       = false 	
+	def correct_parameters?(cmd_name, parameters)		
+		correct = false 	
 
 		if @strg_commands_names.include? cmd_name #if its a storage command, check if the amount and type of parameters
-			thread_variables[:storage]  = true			
-			if !correct_length?(cmd_name,parameters) 				
-				thread_variables[:out_msg] = "#{@output.client_error} : #{cmd_name} should have exactly #{required_amount.to_s} parameters."
+      
+			@thread_variables[:is_storage]  = true			
+			if !correct_length?(cmd_name, parameters) 	
+      			
+				@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{cmd_name} should have exactly #{required_amount.to_s} parameters."
 			else
-				if thread_variables[:no_reply]
-					key , *string_args, no_reply = parameters
+        
+				if @thread_variables[:no_reply]
+					key, *string_args, no_reply = parameters
 				else
-					key , *string_args = parameters
-				end				
+					key, *string_args = parameters
+				end			
+        
 				correct = correct_type?(key, string_args)	 				    		
 		  end
 		else # retrieval commands, just have to check if the keys are valid
 			if valid_keys?(parameters)
+        @thread_variables[:parameters] = parameters
 				correct = true
 			else
-				thread_variables[:out_msg] = "#{@output.client_error} : At least one of the keys supplied is not a valid."
+				@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : At least one of the keys supplied is not a valid."
 			end
 		end
 		return correct
@@ -159,17 +167,18 @@ class Server
   def parse_input(client, str_params)
     parameters = str_params.split
     cmd_name   = parameters.shift #[0]    
+    
     if !valid_command?(cmd_name)   	
-      client.write @output.error
-    else	    	
-      if correct_parameters?(cmd_name,parameters)
-        if thread_variables[:storage] 
-          request_data(client,cmd_name) 
-        end
-        thread_variables[:out_msg] = @cache.send(cmd_name, *thread_variables[:parameters])								
+      client.write Constants::error
+    else	
+      if correct_parameters?(cmd_name, parameters)        
+        if @thread_variables[:is_storage]           
+          request_data(client, cmd_name) 
+        end   
+        @thread_variables[:out_msg] = @cache.send(cmd_name, *@thread_variables[:parameters])								
       end   
-      if !thread_variables[:no_reply]
-        client.write thread_variables[:out_msg]	
+      if !@thread_variables[:no_reply]
+        client.write @thread_variables[:out_msg]	
       else
         client.write "no reply"
       end		
