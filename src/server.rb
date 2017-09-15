@@ -10,6 +10,7 @@ class Server
 		@cache   	  = Cache.instance  	
 		@server  	  = TCPServer.open(ip, port)
 		@clients 	  = Hash.new
+    @client_id  = 0
 		
 		@msg_max_size = msg_max_size
 		@cache.set_max_size(cache_max_size)
@@ -38,7 +39,6 @@ class Server
 					if in_msg.strip. == "quit" #mejorar
 						break
 					end			
-          "antes parse"
           p in_msg		
 					parse_input(client, in_msg)
 				end
@@ -49,6 +49,10 @@ class Server
 		end
 	end
 
+  def get_client_id
+    @client_id += 1
+  end
+  
 	def is_number? string
 	  true if Integer(string) rescue false
 	end
