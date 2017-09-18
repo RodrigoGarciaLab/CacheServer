@@ -4,7 +4,7 @@ require_relative 'data_item'
 class Client
 	def initialize(host,port)		
 		@server = TCPSocket.open(host, port)
-		puts @server.recv(100)		
+		puts @server.recv(100)		#greeting message
 		run
 	end
 
@@ -16,9 +16,9 @@ class Client
 			end
 			if input_msg.include? "data"				
 				input_msg = [DataItem.new(1,2,3)]
-				my_msg = "dale\n".unpack("C*")
-				p my_msg
-				input_msg = my_msg
+				# my_msg = "dale\n".unpack("C*")
+				# p my_msg
+				# input_msg = my_msg
 			end
 			@server.write input_msg
 			in_msg = @server.recv(100)

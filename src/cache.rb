@@ -113,7 +113,7 @@ class Cache
   end
 
   # BEGIN AUX FUNCTIONS
-  def hasKey? key
+  def has_key? key
     @data.key? key
   end
 
@@ -187,6 +187,10 @@ class Cache
 
   def print_data
     p @data 
+  end
+
+  def get_data
+    @data 
   end
 
   def print_keys

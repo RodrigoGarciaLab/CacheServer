@@ -32,16 +32,12 @@ class Server
         client.write greeting_msg(@clients[client])
 				loop do					  
           # variables accessible only from inside the thread
-          @thread_variables[:out_msg]  = "" 
-          @thread_variables[:no_reply] = false  
-          @thread_variables[:is_storage]  = false  
-          @thread_variables[:parameters]  = Array.new
+          @thread_variables[:out_msg]    = String.new 
+          @thread_variables[:no_reply]   = false  
+          @thread_variables[:is_storage] = false  
+          @thread_variables[:parameters] = Array.new
 
-					in_msg = client.recv(@msg_max_size).chomp					
-					if in_msg.strip. == "quit" #mejorar
-						break
-					end			
-          p in_msg		
+					in_msg = client.recv(@msg_max_size).chomp		          		
 					parse_input(client, in_msg)
 				end
 				client.puts "Closing memcached. Bye!"
@@ -70,11 +66,8 @@ class Server
 	def request_data(client, cmd_name)
 		client.write "Now send the data you want to store" # then request data block 
 		
-		byte_size   = @thread_variables[:parameters][@byte_size_pos[cmd_name]]	
-  	#string_data = getData(client, @msg_max_size) # 
-  	data = get_data(client, byte_size) #-> DUDA CONCEPTUAL
-  	# data 		= JSON.parse(string_data)	
-  	# data 		= data[0..byte_size-1]	
+		byte_size = @thread_variables[:parameters][@byte_size_pos[cmd_name]]	
+  	data      = get_data(client, byte_size) 
   	@thread_variables[:parameters].push(data)	
   end
 
@@ -99,19 +92,19 @@ class Server
 		keys.all? {|key| valid_key? key}
 	end
 
-	def valid_key?(key)		
+	def valid_key?(key)	
 		special = "?<>',?[]}{=-)(*&^%$#`~{}"
 		regex   = /[#{special.gsub(/./){|char| "\\#{char}"}}]/
 		!(key =~ regex) && key.length <= 250
 	end
 
-	def valid_command?(cmd_name)
-		!cmd_name.nil? && (@public_commands.include? cmd_name)
+	def valid_command?(cmd_name)    
+		ret = !cmd_name.nil? && (@public_commands.include? cmd_name)   
 	end
 
   def correct_length?(cmd_name, parameters)
     required_amount = @params_amounts[cmd_name].first
-
+    
     if parameters.length == required_amount # check if the amount of parameters is the same as expected and if it includes noreply.      		
       correct = true
       @thread_variables[:no_reply] = false      		
@@ -129,16 +122,15 @@ class Server
 
   def correct_type?(key, string_args)    	
   	correct = false    	
-
   	if !valid_key? key	
 			@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{key} is not a valid key."
-		else	  				      		
-  		if !args_numeric?(string_args) 			      			
-  			@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{cmd_name} parameters must be integers (except key)."	      				      			
+		else	  				      
+  		if !args_numeric?(string_args) 			
+  			@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : for storage commands parameters must be integers (except key)."	      				      			
   		else	      			   		
-    		numeric_args = string_args.map(&:to_i) # now i know parameters are integers, i convert them
-    		@thread_variables[:parameters] 	 = key, *numeric_args
-    		correct      = true
+    		numeric_args                   = string_args.map(&:to_i) # now i know parameters are integers, i convert them
+    		@thread_variables[:parameters] = key, *numeric_args
+    		correct                        = true
     	end
     end
     return correct
@@ -147,21 +139,18 @@ class Server
 	def correct_parameters?(cmd_name, parameters)		
 		correct = false 	
 
-		if @strg_commands_names.include? cmd_name #if its a storage command, check if the amount and type of parameters
-      
-			@thread_variables[:is_storage]  = true			
-			if !correct_length?(cmd_name, parameters) 	
-      			
-				@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{cmd_name} should have exactly #{required_amount.to_s} parameters."
-			else
-        
+		if @strg_commands_names.include? cmd_name #if its a storage command, check if the amount and type of parameters      
+			@thread_variables[:is_storage]  = true	
+			if !correct_length?(cmd_name, parameters)   
+				@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : #{cmd_name} should have exactly #{ @params_amounts[cmd_name].first} parameters."
+      else        
 				if @thread_variables[:no_reply]
 					key, *string_args, no_reply = parameters
 				else
 					key, *string_args = parameters
-				end			
-        
-				correct = correct_type?(key, string_args)	 				    		
+				end	
+        p string_args      
+				correct = correct_type?(key, string_args)	 	
 		  end
 		else # retrieval commands, just have to check if the keys are valid
 			if valid_keys?(parameters)
@@ -170,21 +159,21 @@ class Server
 			else
 				@thread_variables[:out_msg] = "#{Constants::CLIENT_ERROR} : At least one of the keys supplied is not a valid."
 			end
-		end
+		end    
 		return correct
 	end
 
   def parse_input(client, str_params)
     parameters = str_params.split
-    cmd_name   = parameters.shift #[0]    
-    
+    cmd_name   = parameters.shift # first parameter is the command name 
+
     if !valid_command?(cmd_name)   	
-      client.write Constants::error
-    else	
-      if correct_parameters?(cmd_name, parameters)        
-        if @thread_variables[:is_storage]           
+      client.write Constants::ERROR
+    else	      
+      if correct_parameters?(cmd_name, parameters)    
+        if @thread_variables[:is_storage] 
           request_data(client, cmd_name) 
-        end   
+        end           
         @thread_variables[:out_msg] = @cache.send(cmd_name, *@thread_variables[:parameters])								
       end   
       if !@thread_variables[:no_reply]
