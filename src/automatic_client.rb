@@ -2,10 +2,9 @@ require "socket"
 require_relative 'data_item'
 
 class AutomaticClient
-	def initialize(host,port,nro)		
-		@server = TCPSocket.open(host, port)
-		@file = File.new("client#{nro}.txt", "a")	
-    @file.puts("Server: #{@server.recv(100)} \n")
+	def initialize(host,port,num)		
+		@server       = TCPSocket.open(host, port)
+		@file         = init_file(num)
     @require_data = false		
 		run
 	end
@@ -16,7 +15,7 @@ class AutomaticClient
 		input_msg = "init"
 		while input_msg != "quit"
 			if @require_data
-				input_msg = random_data
+				input_msg     = random_data
 				@require_data = false
 			else
 				input_msg = random_commands
@@ -28,6 +27,11 @@ class AutomaticClient
 		end
 		server.close
 	end
+
+  def init_file(client_num)
+    file = File.new("ClientsOutputs/client#{nro}.txt", "a")  
+    file.puts("Server: #{@server.recv(100)} \n")
+  end
 
 	def random_data
 		random_index = rand(0..3)

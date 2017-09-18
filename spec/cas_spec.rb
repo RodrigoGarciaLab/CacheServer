@@ -18,7 +18,7 @@ describe Cache do
 
     it "it shouldn't add if there's already such key" do        
        key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won't store")        
+       @cache.replace(key, 0, 40, 10, "won´t store")        
        data = @cache.get_data              
        expect(@cache.has_key? key).to be false  
     end

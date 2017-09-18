@@ -12,8 +12,8 @@ class Server
 		@clients 	  = Hash.new
     @client_id  = 0
 		
-		@msg_max_size = msg_max_size
-		@cache.set_max_size(cache_max_size)
+		@msg_max_size = msg_max_size # max message size allowed
+		@cache.set_max_size(cache_max_size) # max number of keys allowed
 		
 		@params_amounts      = MethodsParameters::PARAMETERS_AMOUNTS	
 		@public_commands     = MethodsParameters::PARAMETERS_AMOUNTS.keys	
