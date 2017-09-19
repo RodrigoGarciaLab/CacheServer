@@ -30,3 +30,8 @@ RGCacheServer is a ruby cache server based on the especifications of Memcached (
         
 - the expected format is the following:<br>
 \<command name\> \<key\>*\r\n
+
+### Testing
+
+- Inside the spec folder there are some files that test cache's primal functionalities.
+- There is also a file named "charge_test.rb" that, when executed, will create 10 clients and will make them interact with the Cache Server for 10 seconds
