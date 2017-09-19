@@ -6,36 +6,33 @@ describe Cache do
     before(:all) do 
       @cache = Cache.instance 
       @cache.set_max_size(3)
-      @cache.wipe_out
+      @flags = 0
+      @size  = 4
+      @data  = "data"
     end 
 
-    it "should add a new key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
-       data = @cache.get_data              
-       expect(@cache.has_key? key).to be false  
-    end  
+    it "get should return only the word 'END' when there's no such key" do        
+      key = "non_existing_key"      
+      out_msg = @cache.get(key)            
+      expect(out_msg == Constants::END_STRING).to be true  
+    end 
 
-    it "it shouldn't add if there's already such key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
-       data = @cache.get_data              
-       expect(@cache.has_key? key).to be false  
-    end
-      
-  	it "should replace existing key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
-       data = @cache.get_data              
-       expect(@cache.has_key? key).to be false  
-    end  
+    it "get should return the correct output" do        
+      key   = "new_key" 
+      @cache.set(key,@flags,0,@size,@data)   
+      out_msg      = @cache.get(key)   
+      expected_msg = "#{Constants::VALUE} #{key} #{@flags} #{@size}#{Constants::EOL}#{@data}#{Constants::EOL}#{Constants::END_STRING}"      
+      expect(out_msg == expected_msg).to be true  
+    end 
 
-    it "it shouldn't replace if there's no such key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
-       data = @cache.get_data              
-       expect(@cache.has_key? key).to be false  
-    end
+    it "gets should return the correct output" do        
+      key   = "newer_key"   
+      @cache.set(key,0,0,@size,@data) 
+      expected_id  = 2 # since it's the second key ever stored
+      out_msg      = @cache.gets(key)       
+      expected_msg = "#{Constants::VALUE} #{key} #{@flags} #{@size} #{expected_id}#{Constants::EOL}#{@data}#{Constants::EOL}#{Constants::END_STRING}"      
+      expect(out_msg == expected_msg).to be true  
+    end 
 
   end   
 end

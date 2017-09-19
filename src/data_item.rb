@@ -19,6 +19,5 @@ class DataItem
 
    def to_s
     "{flag:#{@flags}, size:#{@size}, value:#{@value}}\n"
-    #'{ "flags": #{@flags} , "size": #{@size}, "value": #{@value} }\n'
   end
 end

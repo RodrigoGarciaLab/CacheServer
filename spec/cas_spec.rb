@@ -10,29 +10,25 @@ describe Cache do
     end 
 
     it "should add a new key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
+       key = "non_existing_key"       
        data = @cache.get_data              
        expect(@cache.has_key? key).to be false  
     end  
 
     it "it shouldn't add if there's already such key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
+       key = "non_existing_key"       
        data = @cache.get_data              
        expect(@cache.has_key? key).to be false  
     end
       
   	it "should replace existing key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
+       key = "non_existing_key"      
        data = @cache.get_data              
        expect(@cache.has_key? key).to be false  
     end  
 
     it "it shouldn't replace if there's no such key" do        
-       key = "non_existing_key"
-       @cache.replace(key, 0, 40, 10, "won´t store")        
+       key = "non_existing_key"       
        data = @cache.get_data              
        expect(@cache.has_key? key).to be false  
     end

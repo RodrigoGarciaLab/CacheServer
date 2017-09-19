@@ -14,12 +14,6 @@ class Client
 			if input_msg == "quit"
 				break
 			end
-			if input_msg.include? "data"				
-				input_msg = [DataItem.new(1,2,3)]
-				# my_msg = "dale\n".unpack("C*")
-				# p my_msg
-				# input_msg = my_msg
-			end
 			@server.write input_msg
 			in_msg = @server.recv(100)
 			p in_msg

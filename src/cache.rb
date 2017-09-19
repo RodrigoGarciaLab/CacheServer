@@ -11,8 +11,7 @@ class Cache
     @exp_times = Hash.new  # stores expire times
     @cas_ids   = Hash.new  # stores unique Ids
     @index     = 0 
-    @max_size  = 0
-    
+    @max_size  = 0    
   end    
 
   def set_max_size(max_size)
@@ -87,6 +86,7 @@ class Cache
   end 
 
   # BEGIN RETRIEVAL COMMANDS
+
   def getters(keys)
     output = String.new
     keys.each do |key|
@@ -107,22 +107,28 @@ class Cache
 
   # DELETE COMMAND
   def delete(key)
-    @data.delete(key)
-    @exp_times.delete(key)
-    @cas_ids.delete(key)
+    if @data.key? key
+      @data.delete(key)
+      @exp_times.delete(key)
+      @cas_ids.delete(key)
+      Constants::DELETED
+    else
+      Constants::NOT_FOUND
+    end
   end
 
-  # BEGIN AUX FUNCTIONS
+  # BEGIN AUX METHODS
   def has_key? key
     @data.key? key
   end
 
-  def wipe_out # not 
+  def wipe_out # just for testing matters 
     @data.each do |key|
       @data.delete(key)
       @exp_times.delete(key)
       @cas_ids.delete(key)      
     end  
+    @index = 0
   end 
 
   def get_autoincrement_id  
@@ -135,15 +141,17 @@ class Cache
 
   def generate_output_CAS(key)
     out = "#{Constants::VALUE} #{key} #{@data[key].flags.to_s} #{@data[key].size.to_s} #{@cas_ids[key].to_s}#{Constants::EOL}#{@data[key].value.join(",")}#{Constants::EOL}"
+  end  
+
+  def modify_CAS(key)
+    @cas_ids[key] = get_autoincrement_id
   end
+
+  # BEGIN TIME MANAGEMENT METHODS
 
   def lru_reorder(key) # deletes and adds the accessed key to keep the Hash ordered according to LRU algorithm
     value = @data.delete(key)
     @data[key] = value
-  end
-
-  def modify_CAS(key)
-    @cas_ids[key] = get_autoincrement_id
   end
 
   def expire!

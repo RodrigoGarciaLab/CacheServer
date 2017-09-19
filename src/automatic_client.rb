@@ -1,37 +1,31 @@
 require "socket"
-require_relative 'data_item'
 
-class AutomaticClient
-	def initialize(host,port,num)		
-		@server       = TCPSocket.open(host, port)
-		@file         = init_file(num)
-    @require_data = false		
+class AutomaticClient # this class is just created for testing, to simulate a client
+	def initialize(host,port,client_num)		
+		@server       = TCPSocket.open(host, port)		
+    @require_data = false	 
+    @client_num = client_num
+    @saved_keys   = []	
 		run
 	end
 
-	def run	
-		@saved_keys = []		
-		
-		input_msg = "init"
+	def run			
+		input_msg = String.new
+
 		while input_msg != "quit"
-			if @require_data
+			if @require_data # if the last command was a storage one, it sends data
 				input_msg     = random_data
 				@require_data = false
 			else
 				input_msg = random_commands
 			end 		
-			@file.puts("Client: #{input_msg} \n")
+			
 			@server.write input_msg
 			in_msg = @server.recv(100)
-			@file.puts("Server: #{in_msg} \n") 
+
 		end
 		server.close
 	end
-
-  def init_file(client_num)
-    file = File.new("ClientsOutputs/client#{nro}.txt", "a")  
-    file.puts("Server: #{@server.recv(100)} \n")
-  end
 
 	def random_data
 		random_index = rand(0..3)
@@ -39,11 +33,13 @@ class AutomaticClient
 			when 0	
 				"data"
 			when 1
-				"more data"
+				"32445532"
 			when 2
-				"data 3"				
+				"this data includes \n\r"				
 			when 3		
-				"data 4"	
+				"[1,2,3,4]"	
+      when 4
+        [DataItem.new(1,2,3)]
 			else
 				"it shouldn`t be anything else"
 		end
@@ -51,7 +47,7 @@ class AutomaticClient
 
 	def random_commands
 		length = 2
-		if @saved_keys.length > 0
+		if @saved_keys.length > 0 # if there's already a key we can select every possible command
 			saved_key = @saved_keys.sample
 			other_saved_key = @saved_keys.sample
 			length = 6
@@ -62,10 +58,10 @@ class AutomaticClient
 		case random_index
 			when 0			
 				@saved_keys.push(random_key)
-				input_msg = "set #{random_key} 0 0 15" 
+				input_msg = "set #{random_key} 0 0 20" 
 			when 1
 				@saved_keys.push(random_key)
-				input_msg ="set #{random_key} 0 10 12"
+				input_msg ="set #{random_key} 0 10 30"
 			when 2
 				input_msg ="prepend #{random_key} 4"				
 			when 3		

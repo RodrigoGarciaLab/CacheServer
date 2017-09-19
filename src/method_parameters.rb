@@ -17,7 +17,6 @@ module MethodsParameters
   PARAMETERS_AMOUNTS["delete"]  = [1, CMD_TYPE.deletion]
   PARAMETERS_AMOUNTS["get"]     = [2, CMD_TYPE.retrieval]
   PARAMETERS_AMOUNTS["gets"]    = [2, CMD_TYPE.retrieval]
-  PARAMETERS_AMOUNTS["printData"] = [2, CMD_TYPE.deletion] # just for test matters
 
   BYTE_SIZE_POS = Hash.new
   BYTE_SIZE_POS["set"]     = 3
@@ -36,4 +35,15 @@ module MethodsParameters
     end
     stg_commands
   end
+
+  def MethodsParameters.get_deletion_commands
+    del_commands = Array.new
+    PARAMETERS_AMOUNTS.each do | key, info |      
+      if info[1] == CMD_TYPE.deletion
+        del_commands.push(key)
+      end
+    end
+    del_commands
+  end
+  
 end
